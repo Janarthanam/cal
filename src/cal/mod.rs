@@ -3,7 +3,7 @@ use std::ops::Bound::Included;
 use std::time::Duration;
 use rand::random;
 
-#[derive(Debug,Default)]
+#[derive(Debug,Default,PartialEq,Eq)]
 pub enum Status {
     Attending,
     #[default]

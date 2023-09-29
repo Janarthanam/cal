@@ -3,6 +3,7 @@ pub mod cal;
 #[cfg(test)]
 mod tests {
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
+    use std::u64::MAX;
     use crate::cal::{Calendar, Event, Slot};
     use crate::cal::Status::{Attending, Tentative};
 
@@ -54,12 +55,16 @@ mod tests {
     pub fn update() -> () {
         let mut cal = Calendar::new();
 
-        //create an event
-        let scheduled = cal.upsert(Slot {
+        let slot = Slot {
             start_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap(),
             end_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap(),
             ..Slot::default()
-        }, Event{
+        };
+
+        let retrieve_slot = slot.clone();
+
+        //create an event
+        let scheduled = cal.upsert(slot, Event{
             status: Attending,
             description: Some(String::from("Test Event")),
             title: Some(String::from("Test title"))
@@ -67,6 +72,18 @@ mod tests {
 
         assert!(scheduled.is_some());
         assert!(scheduled.as_ref().unwrap().id.is_some());
+
+        let event = cal.get_events(&retrieve_slot, &Slot {
+            start_time: Duration::from_secs(MAX),
+            end_time: Duration::from_secs(MAX),
+            id: None
+        });
+
+        assert!(!event.is_empty());
+        assert_eq!(1, event.len());
+        assert_eq!(Attending, event[0].1.status);
+        assert_eq!(String::from("Test title"), event[0].1.title.clone().unwrap());
+
 
         let tentative = cal.upsert(scheduled.unwrap(), Event {
             status: Tentative,
@@ -76,5 +93,16 @@ mod tests {
 
         assert!(tentative.is_some());
         assert!(tentative.unwrap().id.is_some());
+
+        let retrieved_event = cal.get_events(&retrieve_slot, &Slot {
+            start_time: Duration::from_secs(MAX),
+            end_time: Duration::from_secs(MAX),
+            id: None
+        });
+
+        assert!(!retrieved_event.is_empty());
+        assert_eq!(1, retrieved_event.len());
+        assert_eq!(Tentative, retrieved_event[0].1.status);
+        assert_eq!(String::from("Test title - tentative"), retrieved_event[0].1.title.clone().unwrap());
     }
 }

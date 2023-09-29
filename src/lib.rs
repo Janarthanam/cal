@@ -52,7 +52,7 @@ mod tests {
     }
 
     #[test]
-    pub fn update() -> () {
+    pub fn crud_test() -> () {
         let mut cal = Calendar::new();
 
         let slot = Slot {
@@ -61,7 +61,7 @@ mod tests {
             ..Slot::default()
         };
 
-        let retrieve_slot = slot.clone();
+        let mut retrieve_slot = slot.clone();
 
         //create an event
         let scheduled = cal.upsert(slot, Event{
@@ -73,6 +73,7 @@ mod tests {
         assert!(scheduled.is_some());
         assert!(scheduled.as_ref().unwrap().id.is_some());
 
+        //retrieve
         let event = cal.get_events(&retrieve_slot, &Slot {
             start_time: Duration::from_secs(MAX),
             end_time: Duration::from_secs(MAX),
@@ -84,7 +85,9 @@ mod tests {
         assert_eq!(Attending, event[0].1.status);
         assert_eq!(String::from("Test title"), event[0].1.title.clone().unwrap());
 
+        retrieve_slot.id = event[0].0.id;
 
+        //update
         let tentative = cal.upsert(scheduled.unwrap(), Event {
             status: Tentative,
             description: Some(String::from("Test Event is tentative")),
@@ -94,6 +97,7 @@ mod tests {
         assert!(tentative.is_some());
         assert!(tentative.unwrap().id.is_some());
 
+        //retrieve
         let retrieved_event = cal.get_events(&retrieve_slot, &Slot {
             start_time: Duration::from_secs(MAX),
             end_time: Duration::from_secs(MAX),
@@ -104,5 +108,25 @@ mod tests {
         assert_eq!(1, retrieved_event.len());
         assert_eq!(Tentative, retrieved_event[0].1.status);
         assert_eq!(String::from("Test title - tentative"), retrieved_event[0].1.title.clone().unwrap());
+
+        //delete
+        let deleted_event = cal.delete(&retrieve_slot);
+
+        assert!(deleted_event.is_some());
+        assert_eq!(Tentative, deleted_event.as_ref().unwrap().status);
+        assert_eq!(String::from("Test title - tentative"), deleted_event.unwrap().title.unwrap());
+
+        //double delete
+        let double_deleted = cal.delete(&retrieve_slot);
+        assert!(double_deleted.is_none());
+
+        //retrieve after delete
+        let retrieved_deleted = cal.get_events(&retrieve_slot, &Slot {
+            start_time: Duration::from_secs(MAX),
+            end_time: Duration::from_secs(MAX),
+            id: None
+        });
+
+        assert!(retrieved_deleted.is_empty());
     }
 }

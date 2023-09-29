@@ -65,5 +65,9 @@ impl Calendar {
         self.slots.insert(upsert_slot.clone(),event);
         Some(upsert_slot)
     }
+
+    pub fn delete(&mut self, slot: &Slot) -> Option<Event> {
+        self.slots.remove(slot)
+    }
 }
 

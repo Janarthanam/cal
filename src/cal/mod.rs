@@ -1,9 +1,11 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::ops::Bound::Included;
-use std::time::Duration;
 use rand::random;
+use rocket::{FromForm, FromFormField};
+use rocket::serde::Deserialize;
+use rocket::serde::Serialize;
 
-#[derive(Debug,Default,PartialEq,Eq)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone,PartialEq,Eq,FromFormField)]
 pub enum Status {
     Attending,
     #[default]
@@ -12,24 +14,55 @@ pub enum Status {
 }
 
 //Slot is a basic calendar slot.
-#[derive(Debug, Default, Clone, Ord, PartialOrd, PartialEq, Eq)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, Ord, PartialOrd, PartialEq, Eq, FromForm)]
 pub struct Slot {
-    pub start_time: Duration,
-    pub end_time: Duration,
+    pub start_time: u64,
+    pub end_time: u64,
     //todo. this can be private
     pub id: Option<u8>,
 }
 
-#[derive(Debug,Default)]
+#[derive(Debug,Serialize, Deserialize,Clone, FromForm)]
 pub struct Event {
     pub status: Status,
     pub description: Option<String>,
     pub title: Option<String>
 }
 
+#[derive(Debug,Serialize, Deserialize,Clone,FromForm)]
+pub struct SlotEvent {
+    pub slot: Slot,
+    pub event: Event
+}
+
 #[derive(Debug)]
 pub struct Calendar {
     slots: BTreeMap<Slot,Event>
+}
+
+
+///this would implement multiple calendars!?
+pub struct Calendars {
+    calendars: HashMap<String, Calendar>
+}
+
+impl Calendars {
+    pub fn new() -> Self {
+        Calendars {
+            calendars: HashMap::new()
+        }
+    }
+
+    pub fn get_instance(&self, key: &str) -> Option<& Calendar>
+    {
+        self.calendars.get(key)
+    }
+
+    pub fn create_if_absent(&mut self, key: &str) -> &mut Calendar
+    {
+        self.calendars.entry(key.to_owned()).or_insert(Calendar::new())
+    }
+
 }
 
 impl Calendar {
@@ -49,6 +82,10 @@ impl Calendar {
         events.collect()
     }
 
+    //get event with a particular sort key
+    pub fn get(&self, slot_key: &Slot) -> Option<&Event> {
+        self.slots.get(slot_key)
+    }
 
     //If a slot exists, update the slot.
     // A slot is same if start_time, end_time and id is same.

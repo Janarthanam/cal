@@ -3,7 +3,6 @@ pub mod cal;
 #[cfg(test)]
 mod tests {
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
-    use std::u64::MAX;
     use crate::cal::{Calendar, Event, Slot};
     use crate::cal::Status::{Attending, Tentative};
 
@@ -11,12 +10,12 @@ mod tests {
     pub fn get_empty() {
         let cal = Calendar::new();
         let events = cal.get_events(&Slot{
-            start_time: Duration::from_secs(0),
-            end_time: Duration::from_secs(0),
+            start_time: 0,
+            end_time: 0,
             ..Slot::default()
         }, &Slot{
-            start_time: Duration::from_secs(u64::MAX),
-            end_time: Duration::from_secs(u64::MAX),
+            start_time: u64::MAX,
+            end_time: u64::MAX,
             ..Slot::default()
         });
         assert!(events.is_empty())
@@ -26,8 +25,8 @@ mod tests {
     pub fn get_range() {
         let mut cal = Calendar::new();
         let meet_slot = Slot {
-            start_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap(),
-            end_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap(),
+            start_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            end_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
             ..Slot::default()
         };
 
@@ -39,12 +38,12 @@ mod tests {
         });
 
         let events = cal.get_events(&Slot{
-            start_time: Duration::from_secs(0),
-            end_time: Duration::from_secs(0),
+            start_time: 0,
+            end_time: 0,
             ..Slot::default()
         }, &Slot{
-            start_time: Duration::from_secs(u64::MAX),
-            end_time: Duration::from_secs(u64::MAX),
+            start_time: u64::MAX,
+            end_time: u64::MAX,
             ..Slot::default()
         });
         assert_eq!(1, events.len());
@@ -56,8 +55,8 @@ mod tests {
         let mut cal = Calendar::new();
 
         let slot = Slot {
-            start_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap(),
-            end_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap(),
+            start_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            end_time: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
             ..Slot::default()
         };
 
@@ -75,8 +74,8 @@ mod tests {
 
         //retrieve
         let event = cal.get_events(&retrieve_slot, &Slot {
-            start_time: Duration::from_secs(MAX),
-            end_time: Duration::from_secs(MAX),
+            start_time: u64::MAX,
+            end_time: u64::MAX,
             id: None
         });
 
@@ -99,8 +98,8 @@ mod tests {
 
         //retrieve
         let retrieved_event = cal.get_events(&retrieve_slot, &Slot {
-            start_time: Duration::from_secs(MAX),
-            end_time: Duration::from_secs(MAX),
+            start_time: u64::MAX,
+            end_time: u64::MAX,
             id: None
         });
 
@@ -122,8 +121,8 @@ mod tests {
 
         //retrieve after delete
         let retrieved_deleted = cal.get_events(&retrieve_slot, &Slot {
-            start_time: Duration::from_secs(MAX),
-            end_time: Duration::from_secs(MAX),
+            start_time: u64::MAX,
+            end_time: u64::MAX,
             id: None
         });
 
